@@ -2,6 +2,7 @@
 
 **The open-source truth engine for XAP. Deterministic decision provenance and replay.**
 
+[![Version: v0.2](https://img.shields.io/badge/Version-v0.2-blue.svg)](#)
 [![Tests: 103 passing](https://img.shields.io/badge/Tests-103%20passing-brightgreen.svg)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/Rust-stable-orange.svg)](https://www.rust-lang.org/)
@@ -118,6 +119,20 @@ assert_eq!(replay_hash, h2);
 ```
 
 Inclusion proofs allow any party to verify a specific receipt is part of a chain without downloading the entire chain. This is the primitive that makes public verification of `AgentManifest` receipt hashes efficient.
+
+Extended in v0.2 with:
+
+- **timestamp.rs** — RFC 3161 TSA token request and verification.
+  Receipts can be anchored to an independent Timestamp Authority,
+  proving existence and time regardless of the issuing system's clock.
+
+- **policy.rs** — Policy document canonical JSON and content addressing.
+  Every settlement decision is governed by a specific policy version.
+  The `policy_content_hash` field enables independent verification.
+
+- **attestation.rs** — External verifier attestation for probabilistic
+  conditions. Quality scores from external systems can now be
+  cryptographically signed by the verifier.
 
 ---
 
@@ -284,6 +299,25 @@ These are not configurable. They are structural properties of the engine.
 7. Reversals are journaled, not edits. A reversed settlement still exists in the ledger.
 
 Violating any of these makes the system not-Verity.
+
+---
+
+## Seven Trust Properties
+
+A VerityReceipt in v0.2 carries up to seven independently verifiable
+trust properties:
+
+| # | Property | What it proves | Field |
+|---|---|---|---|
+| 1 | Existence | Receipt has a unique ID and is permanently recorded | `verity_id` |
+| 2 | Integrity | Hash chain links this receipt to all prior receipts | `chain.previous_hash` |
+| 3 | Correctness | Governing policy is retrievable and hash-verified | `rules_applied.policy_content_hash` |
+| 4 | Determinism | Replay produces identical outcome | `replay_hash` |
+| 5 | Attribution | Signed by a specific key with auditable rotation history | `signature.key_id` |
+| 6 | Causality | Position in multi-agent workflow chain is navigable | `causality.workflow_id` |
+| 7 | Third-party | External verifiers signed their attestations | `verifier_attestation.signature` |
+
+Properties 1-4 were present in v0.1. Properties 5-7 were added in v0.2.
 
 ---
 

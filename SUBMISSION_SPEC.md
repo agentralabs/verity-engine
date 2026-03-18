@@ -176,6 +176,37 @@ Chain integrity is verified on submission. A `previous_hash` that does not match
 
 ---
 
+## Section 2A — The Seven Trust Properties
+
+A VerityReceipt submitted to the Verity Network may carry up to seven
+independently verifiable trust properties. All five v0.3 fields are
+optional — v0.2 receipts are accepted and carry properties 1-4.
+
+| Property | Required? | Field | How to get it |
+|---|---|---|---|
+| 1. Existence | Always | `verity_id` | Auto-generated |
+| 2. Integrity | Always | `chain.previous_hash` | Track your chain |
+| 3. Correctness | Optional | `rules_applied.policy_content_hash` | Hash the policy doc |
+| 4. Determinism | Always | `replay_hash` | Compute per Appendix A |
+| 5. Attribution | Optional | `signature.key_id` | Register key history |
+| 6. Causality | Optional | `causality.workflow_id` | Track your workflows |
+| 7. Third-party | Optional | `verifier_attestation.signature` | Have verifier sign |
+
+### Computing policy_content_hash
+
+```python
+import json, hashlib
+
+def policy_content_hash(policy_rules: dict) -> str:
+    canonical = json.dumps(policy_rules, sort_keys=True, separators=(',', ':'))
+    return "sha256:" + hashlib.sha256(canonical.encode()).hexdigest()
+```
+
+The xap-v0.2 policy document and its hash are available at:
+`https://api.zexrail.com/xap/v1/policies/xap-v0.2`
+
+---
+
 ## Section 3 — The Submission API
 
 Base URL: `https://api.verityengine.io/v1`
