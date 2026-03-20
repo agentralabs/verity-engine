@@ -38,16 +38,16 @@ fn test_full_settlement_flow() {
     let settlement_id = SettlementId::generate();
     let contract_id = ContractId::generate();
 
-    // 3. Record escrow in MoneyLedger
+    // 3. Record payment hold in MoneyLedger
     let mut money_ledger = MoneyLedger::new(settlement_id.clone());
     money_ledger.append(MoneyEntry {
         entry_id: String::new(),
         agent_id: payer.clone(),
         direction: MoneyDirection::Debit,
         amount: Money::new(100_000, Currency::USD), // $1000.00
-        entry_type: MoneyEntryType::Escrow,
+        entry_type: MoneyEntryType::PaymentHold,
         timestamp: CanonicalTimestamp::now(),
-        reference: format!("escrow_{}", contract_id),
+        reference: format!("payment_hold_{}", contract_id),
     });
 
     // 4. Submit evidence to EvidenceLedger
@@ -75,7 +75,7 @@ fn test_full_settlement_flow() {
     let input_state = json!({
         "settlement_id": settlement_id.as_str(),
         "contract_id": contract_id.as_str(),
-        "escrow_amount_minor_units": 100_000,
+        "hold_amount_minor_units": 100_000,
         "currency": "USD",
         "conditions": [
             {"id": "http_200_check", "type": "deterministic", "result": true},

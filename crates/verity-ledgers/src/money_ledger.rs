@@ -31,7 +31,7 @@ pub enum MoneyDirection {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MoneyEntryType {
-    Escrow,
+    PaymentHold,
     Settlement,
     Refund,
     PlatformFee,
@@ -157,7 +157,7 @@ mod tests {
     fn test_append_and_len() {
         let mut ledger = MoneyLedger::new(SettlementId::generate());
         let agent = AgentId::generate();
-        ledger.append(make_entry(&agent, MoneyDirection::Debit, 1000, MoneyEntryType::Escrow, "escrow"));
+        ledger.append(make_entry(&agent, MoneyDirection::Debit, 1000, MoneyEntryType::PaymentHold, "payment_hold"));
         ledger.append(make_entry(&agent, MoneyDirection::Credit, 1000, MoneyEntryType::Settlement, "payout"));
         assert_eq!(ledger.len(), 2);
     }
@@ -166,7 +166,7 @@ mod tests {
     fn test_entry_ids_are_sequential() {
         let mut ledger = MoneyLedger::new(SettlementId::generate());
         let agent = AgentId::generate();
-        ledger.append(make_entry(&agent, MoneyDirection::Debit, 100, MoneyEntryType::Escrow, "e1"));
+        ledger.append(make_entry(&agent, MoneyDirection::Debit, 100, MoneyEntryType::PaymentHold, "e1"));
         ledger.append(make_entry(&agent, MoneyDirection::Credit, 100, MoneyEntryType::Settlement, "e2"));
         assert_eq!(ledger.entries()[0].entry_id, "mle_1");
         assert_eq!(ledger.entries()[1].entry_id, "mle_2");
@@ -179,7 +179,7 @@ mod tests {
         let payee = AgentId::generate();
 
         // Payer debits 1000, payee credits 1000
-        ledger.append(make_entry(&payer, MoneyDirection::Debit, 1000, MoneyEntryType::Escrow, "escrow"));
+        ledger.append(make_entry(&payer, MoneyDirection::Debit, 1000, MoneyEntryType::PaymentHold, "payment_hold"));
         ledger.append(make_entry(&payee, MoneyDirection::Credit, 1000, MoneyEntryType::Settlement, "payout"));
 
         assert!(ledger.verify_balance().unwrap());
@@ -213,7 +213,7 @@ mod tests {
         let agent1 = AgentId::generate();
         let agent2 = AgentId::generate();
 
-        ledger.append(make_entry(&agent1, MoneyDirection::Debit, 1000, MoneyEntryType::Escrow, "e1"));
+        ledger.append(make_entry(&agent1, MoneyDirection::Debit, 1000, MoneyEntryType::PaymentHold, "e1"));
         ledger.append(make_entry(&agent2, MoneyDirection::Credit, 1000, MoneyEntryType::Settlement, "s1"));
         ledger.append(make_entry(&agent1, MoneyDirection::Credit, 500, MoneyEntryType::Refund, "r1"));
 
@@ -225,7 +225,7 @@ mod tests {
     fn test_entries_immutable_via_api() {
         let mut ledger = MoneyLedger::new(SettlementId::generate());
         let agent = AgentId::generate();
-        ledger.append(make_entry(&agent, MoneyDirection::Debit, 1000, MoneyEntryType::Escrow, "e1"));
+        ledger.append(make_entry(&agent, MoneyDirection::Debit, 1000, MoneyEntryType::PaymentHold, "e1"));
 
         // entries() returns &[MoneyEntry], no &mut access
         let entries = ledger.entries();
@@ -235,10 +235,10 @@ mod tests {
     #[test]
     fn test_hold_and_release_balance() {
         let mut ledger = MoneyLedger::new(SettlementId::generate());
-        let escrow = AgentId::generate();
+        let hold_agent = AgentId::generate();
 
-        ledger.append(make_entry(&escrow, MoneyDirection::Hold, 5000, MoneyEntryType::Escrow, "hold"));
-        ledger.append(make_entry(&escrow, MoneyDirection::Release, 5000, MoneyEntryType::Settlement, "release"));
+        ledger.append(make_entry(&hold_agent, MoneyDirection::Hold, 5000, MoneyEntryType::PaymentHold, "hold"));
+        ledger.append(make_entry(&hold_agent, MoneyDirection::Release, 5000, MoneyEntryType::Settlement, "release"));
 
         assert!(ledger.verify_balance().unwrap());
     }
@@ -251,7 +251,7 @@ mod tests {
         let platform = AgentId::generate();
 
         // Payer puts in 10000
-        ledger.append(make_entry(&payer, MoneyDirection::Debit, 10000, MoneyEntryType::Escrow, "escrow"));
+        ledger.append(make_entry(&payer, MoneyDirection::Debit, 10000, MoneyEntryType::PaymentHold, "payment_hold"));
         // Payee gets 9500
         ledger.append(make_entry(&payee, MoneyDirection::Credit, 9500, MoneyEntryType::Settlement, "payout"));
         // Platform gets 500 fee
